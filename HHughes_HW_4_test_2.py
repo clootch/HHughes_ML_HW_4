@@ -8,7 +8,7 @@ import time
 So if i use CV2 to filter out all of the crap, then find the area of the white space in the image (Anything of importance)
 then I could use that to classify if its a worm or not.
 """
-
+#searches for folders within the 
 def findpath(pathname=""):
     folders = []
     for name in os.listdir(pathname):
@@ -36,6 +36,16 @@ def filenames(pathname="",folders=""):
         temp = []
     return images
 
+def processing(pathname="",filenames=""):
+    curindex = 0
+    for curimageset in filenames:
+        for image in curimageset:
+            #Creates a Black and White version of the imput image.
+            im =cv2.imread("{}/{}/{}".format(pathname,curindex+1,image))
+            _,bawi = cv2.threshold(im,210,255,cv2.THRESH_BINARY)
+            cv2.imshow("Black and White",bawi)
+            cv2.waitKey(0)
+        curindex += 1
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -51,4 +61,5 @@ if __name__ == "__main__":
     #we have now found if there are folders in the path. Now to extract all the images. 
     filenames = filenames(pathname=pathname,folders=folders)
     #all image names have been extracted, now to do the dirty work. 
-    print("Execution Time: {}".format(time.time()-start_time))
+    processing(pathname=pathname,filenames=filenames)
+    print("Execution Time: {} seconds".format(time.time()-start_time))
