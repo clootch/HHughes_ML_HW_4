@@ -26,7 +26,7 @@ def valid_path(pathname=""):
     except: 
         return False
 
-def processing(pathname="",folders=""):
+def filenames(pathname="",folders=""):
     images = []
     temp = []
     for curfolder in folders: 
@@ -49,7 +49,6 @@ if __name__ == "__main__":
     pathname = "D:/Celegans_Train"
     folders = findpath(pathname)
     #we have now found if there are folders in the path. Now to extract all the images. 
-    filenames = processing(pathname=pathname,folders=folders)
-    for category in filenames:
-        print(len(category))
+    filenames = filenames(pathname=pathname,folders=folders)
+    #all image names have been extracted, now to do the dirty work. 
     print("Execution Time: {}".format(time.time()-start_time))
