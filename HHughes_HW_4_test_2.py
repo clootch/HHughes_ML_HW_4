@@ -3,11 +3,6 @@ from matplotlib import pyplot as plt
 import cv2
 import os
 import time
-#Need to find what quantifiers I want for classification. 
-"""
-So if i use CV2 to filter out all of the crap, then find the area of the white space in the image (Anything of importance)
-then I could use that to classify if its a worm or not.
-"""
 #searches for folders within the 
 def findpath(pathname=""):
     folders = []
@@ -36,19 +31,20 @@ def filenames(pathname="",folders=""):
         temp = []
     return images
 
-def processing(pathname="",filenames=""):
-    curindex = 0
+def processing(pathname="",curfolder="",filenames=""):
     for curimageset in filenames:
         for image in curimageset:
             #Creates a Black and White version of the imput image.
-            im =cv2.imread("{}/{}/{}".format(pathname,curindex+1,image))
-            _,bawi = cv2.threshold(im,210,255,cv2.THRESH_BINARY)
+            im =cv2.imread("{}/{}/{}".format(pathname,curfolder,image))
+            _,bawi = cv2.threshold(im,150,255,cv2.THRESH_BINARY)
             cv2.imshow("Black and White",bawi)
+            features = np.asarray(bawi)
+            features = features.flatten()
+            print(len(features))
             cv2.waitKey(0)
-        curindex += 1
 
 if __name__ == "__main__":
-    start_time = time.time()
+    
     pathname = input("What is the Pathname: ")
     #Checks if this is a valid path. Will continue to ask until its a valid path.
     while True:
@@ -56,10 +52,12 @@ if __name__ == "__main__":
             break
         else:
             pathname = input("That path was invalid, Please enter a new one: ")
-    pathname = "D:/Celegans_Train"
+    pathname = "E:\Visual Studio Code (Python and CPP)\Python Code\Machine Learning\Homework 4"
     folders = findpath(pathname)
     #we have now found if there are folders in the path. Now to extract all the images. 
     filenames = filenames(pathname=pathname,folders=folders)
     #all image names have been extracted, now to do the dirty work. 
-    processing(pathname=pathname,filenames=filenames)
+    for curfolder in folders:
+        processing(pathname=pathname,curfolder=curfolder,filenames=filenames)
+    start_time = time.time()
     print("Execution Time: {} seconds".format(time.time()-start_time))
