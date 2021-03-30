@@ -21,30 +21,29 @@ def valid_path(pathname=""):
     except: 
         return False
 
-def filenames(pathname="",folders=""):
+def fileNames(pathname="",folders=""):
     images = []
-    temp = []
-    for curfolder in folders: 
-        for filename in os.listdir("{}/{}".format(pathname,curfolder)):
-            temp.append(filename)
-        images.append(temp)
-        temp = []
+    for filename in os.listdir("{}/{}".format(pathname,curfolder)):
+        images.append((curfolder,filename))
     return images
 
-def processing(pathname="",curfolder="",filenames=""):
+def processing(pathname="",filenames=""):
+    feature_vector = []
     for curimageset in filenames:
         for image in curimageset:
             #Creates a Black and White version of the imput image.
-            im =cv2.imread("{}/{}/{}".format(pathname,curfolder,image))
+            im =cv2.imread("{}/{}/{}".format(pathname,image[0],image[1]))
+            im = cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
             _,bawi = cv2.threshold(im,150,255,cv2.THRESH_BINARY)
-            cv2.imshow("Black and White",bawi)
+            cv2.imshow("{}:{}".format(image[0],image[1]),bawi)
+            cv2.waitKey(0)
             features = np.asarray(bawi)
             features = features.flatten()
-            print(len(features))
-            cv2.waitKey(0)
+            feature_vector.append(features)
+    return feature_vector  
 
 if __name__ == "__main__":
-    
+    print(os.listdir("E:\Visual Studio Code (Python and CPP)\Python Code\Machine Learning\Homework 4\images"))
     pathname = input("What is the Pathname: ")
     #Checks if this is a valid path. Will continue to ask until its a valid path.
     while True:
@@ -52,12 +51,16 @@ if __name__ == "__main__":
             break
         else:
             pathname = input("That path was invalid, Please enter a new one: ")
-    pathname = "E:\Visual Studio Code (Python and CPP)\Python Code\Machine Learning\Homework 4"
+    pathname = "E:\Visual Studio Code (Python and CPP)\Python Code\Machine Learning\Homework 4\images"
     folders = findpath(pathname)
     #we have now found if there are folders in the path. Now to extract all the images. 
-    filenames = filenames(pathname=pathname,folders=folders)
-    #all image names have been extracted, now to do the dirty work. 
+    filenames = []
     for curfolder in folders:
-        processing(pathname=pathname,curfolder=curfolder,filenames=filenames)
+        filenames.append(fileNames(pathname=pathname,folders=curfolder))
+    #all image names have been extracted, now to do the dirty work. 
+    feature_vector = processing(pathname=pathname,filenames=filenames)
+    print(len(feature_vector))
+    for val in feature_vector:
+        print(len(val))
     start_time = time.time()
     print("Execution Time: {} seconds".format(time.time()-start_time))
