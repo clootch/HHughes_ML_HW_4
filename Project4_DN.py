@@ -11,6 +11,7 @@ import cv2
 import os
 import time
 import matplotlib.pyplot as plt
+import math
 def logisticRegression(X,y,valX,valY,lr,rho):
     #append ones to X for bias weight
     X = np.append(X,np.ones((len(X[:,1]),1)),1)
@@ -18,7 +19,7 @@ def logisticRegression(X,y,valX,valY,lr,rho):
     N = X.shape[0]
     NVal = valX.shape[0]
     #random initialization of w to small weights
-    w = np.random.rand(len(X[1,:]),len(np.unique(y)))*0.001
+    w = np.random.rand(len(X[1,:]),len(np.unique(y)))*0.0001
     #one hot enocde y into Y
     Y_oneHot = oneHot(y)
     Y_oneHotVal = oneHot(valY)
@@ -28,18 +29,28 @@ def logisticRegression(X,y,valX,valY,lr,rho):
     v = 0
     numBadEps = 0
     bestLossVal = 10
-    ESpatience = 15
+    ESpatience = 20
     LRpatience = 7
     tol = 0.0001
     LRdelayCount = 0
-    LRDelay = 5
+    LRDelay = 7
+    batchSize = 64
+    numBatches = math.ceil(N/batchSize)
     for i in range(it):
-        A = softmax(np.dot(X,w))
-        print(i)
-        grad = (-1 / N) * np.dot(X.T,(Y_oneHot - A))
-        v = rho*v+lr*grad
-        w = w - ( v)
-        
+        #Mini-Batch Grad Descent
+        for ii in range(numBatches):
+            BX = X[ii*batchSize:(ii+1)*batchSize]
+            By = Y_oneHot[ii*batchSize:(ii+1)*batchSize]
+            A = softmax(np.dot(BX,w))
+            grad = (-1 / N) * np.dot(BX.T,(By - A))
+            v = rho*v+lr*grad
+            w = w - ( v)
+            
+        #Full Grad Descent
+        # A = softmax(np.dot(X,w))
+        # grad = (-1 / N) * np.dot(X.T,(Y_oneHot - A))
+        # v = rho*v+lr*grad
+        # w = w - ( v)
         #Eval Train and Val sets
         A = softmax(np.dot(X,w))
         loss = (-1 / N) * np.sum(Y_oneHot * np.log(A))
@@ -136,17 +147,20 @@ def processing(pathname="",filenames=""):
             # cv2.waitKey(0)
             
             #Close image
-            kernel = np.ones((8,8),np.uint8)
+            kernel = np.ones((9,9),np.uint8)
             im = cv2.morphologyEx(im, cv2.MORPH_CLOSE, kernel)
             # cv2.imshow("{}:{}".format(image[0],image[1]),im)
             # cv2.waitKey(0)
-            
+            # im = cv2.adaptiveThreshold(im,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+            # cv2.THRESH_BINARY,19,5)
+            # cv2.imshow("{}:{}".format(image[0],image[1]),im)
+            # cv2.waitKey(0)
             #resize image
             im = cv2.resize(im, (35,35), interpolation = cv2.INTER_LANCZOS4)
             
             
             #edge detection
-            # _,bawi = cv2.threshold(im,200,255,cv2.THRESH_BINARY)
+            
             # cv2.imshow("{}:{}".format(image[0],image[1]),bawi)
             # cv2.waitKey(0)
             im = cv2.Canny(im,100,200)
@@ -155,7 +169,7 @@ def processing(pathname="",filenames=""):
 
             features = np.asarray(im)
             features = features.flatten()
-            feature_vector.append(features)
+            feature_vector.append(features/255)
             t.append(int(image[0]))
     return feature_vector,t
 
@@ -176,7 +190,7 @@ if __name__ == "__main__":
         filenames.append(fileNames(pathname=pathname,folders=curfolder))
     #all image names have been extracted, now to do the dirty work. 
     feature_vector,target = processing(pathname=pathname,filenames=filenames)
-    feature_vector = np.array(feature_vector)/255
+    feature_vector = np.array(feature_vector)
     target = np.array(target)
         
     np.random.seed(20)
@@ -203,12 +217,13 @@ if __name__ == "__main__":
     
     # for val in feature_vector:
     #     print(len(val))
-    start_time = time.time()
-    lr = 0.005
+    
+    lr = 0.01
     rho = 0.95
+    start_time = time.time()
     w,losses,lossesVal,preds,predsVal = logisticRegression(trainX,trainY,valX,valY,lr,rho)
-    run_time = time.time()-start_time
-    print("Execution Time: {} seconds".format(run_time))
+    train_time = time.time()-start_time
+    print("Train Time: {} seconds".format(train_time))
     #Plot losses
     plt.figure()
     plt.plot(losses)
@@ -221,7 +236,24 @@ if __name__ == "__main__":
     missclassRateVal = sum(missclassVal)/valY.shape[0]
     #%%
     #Test on Test Set
+    start_time = time.time()
     testPred = predict(testX, w)
+    test_time = time.time()-start_time
+    print("Test Time: {} seconds".format(test_time))
     missclassTest = testPred!=testY
     missclassRateTest = sum(missclassTest)/testY.shape[0]
     
+    from sklearn.metrics import confusion_matrix
+    cfm = confusion_matrix(testY,testPred)
+    print(cfm)
+#%%
+    import pickle
+    file = 'trainedModel'
+    pickle.dump(w, open(file, 'wb'))
+    loaded_model = pickle.load(open(file, 'rb'))
+    start_time = time.time()
+    testPred = predict(testX, loaded_model)
+    test_time = time.time()-start_time
+    print("Test Time: {} seconds".format(test_time))
+    missclassTest1 = testPred!=testY
+    missclassRateTest1 = sum(missclassTest1)/testY.shape[0]
