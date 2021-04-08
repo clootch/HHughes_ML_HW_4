@@ -182,7 +182,6 @@ if __name__ == "__main__":
             break
         else:
             pathname = input("That path was invalid, Please enter a new one: ")
-    pathname = "C:/Users/Daniel/OneDrive - Texas Tech University/Docs/Spring2021/ECE533ML/Assignments/Project4/data"
     folders = findpath(pathname)
     #we have now found if there are folders in the path. Now to extract all the images. 
     filenames = []
